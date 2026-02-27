@@ -82,7 +82,7 @@ const initializeDatabase = async () => {
           potluck_event_id INTEGER REFERENCES potluck_events(id) ON DELETE CASCADE,
           user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
           dish_name VARCHAR(255) NOT NULL,
-          category VARCHAR(20) NOT NULL CHECK (category IN ('appetizer', 'side', 'main', 'dessert', 'drinks', 'other')),
+          category VARCHAR(50) NOT NULL CHECK (category IN ('appetizer', 'side', 'main', 'dessert', 'drink', 'other')),
           notes TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -96,8 +96,7 @@ const initializeDatabase = async () => {
           submitted_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
           title VARCHAR(255) NOT NULL,
           description TEXT,
-          status VARCHAR(20) NOT NULL DEFAULT 'submitted' CHECK (status IN ('submitted', 'added_to_agenda', 'reviewed', 'declined')),
-          status_updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+          status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'discussed', 'rejected')),
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -120,6 +119,7 @@ const initializeDatabase = async () => {
           title VARCHAR(255) NOT NULL,
           message TEXT NOT NULL,
           is_public BOOLEAN DEFAULT FALSE,
+          status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'answered')),
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -129,11 +129,10 @@ const initializeDatabase = async () => {
         CREATE TABLE IF NOT EXISTS board_question_responses (
           id SERIAL PRIMARY KEY,
           question_id INTEGER REFERENCES board_questions(id) ON DELETE CASCADE,
-          responded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+          responded_by INTEGER REFERENCES users(id) ON DELETE CASCADE,
           message TEXT NOT NULL,
-          is_public BOOLEAN DEFAULT FALSE,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          is_public BOOLEAN DEFAULT TRUE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `);
 
@@ -145,10 +144,10 @@ const initializeDatabase = async () => {
           title VARCHAR(255) NOT NULL,
           description TEXT,
           event_date DATE NOT NULL,
-          start_time TIME NOT NULL,
+          start_time TIME,
           end_time TIME,
           location VARCHAR(255),
-          event_type VARCHAR(20) NOT NULL DEFAULT 'meeting' CHECK (event_type IN ('meeting', 'social', 'special')),
+          event_type VARCHAR(20) NOT NULL DEFAULT 'meeting' CHECK (event_type IN ('meeting', 'social', 'maintenance', 'deadline', 'other')),
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -160,9 +159,10 @@ const initializeDatabase = async () => {
           community_id INTEGER REFERENCES communities(id) ON DELETE CASCADE,
           created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
           question TEXT NOT NULL,
+          description TEXT,
           poll_type VARCHAR(20) NOT NULL DEFAULT 'single' CHECK (poll_type IN ('single', 'multiple')),
           is_anonymous BOOLEAN DEFAULT FALSE,
-          results_visible VARCHAR(20) NOT NULL DEFAULT 'after_close' CHECK (results_visible IN ('always', 'after_close')),
+          results_visible VARCHAR(20) NOT NULL DEFAULT 'after_close' CHECK (results_visible IN ('always', 'after_vote', 'after_close')),
           opens_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
           closes_at TIMESTAMP,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
