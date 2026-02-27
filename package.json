@@ -1,0 +1,12 @@
+{
+  "name": "hoaboard",
+  "version": "1.0.0",
+  "description": "HOABoard - HOA Community Management Application",
+  "scripts": {
+    "postinstall": "npm install --prefix client && npm run build --prefix client && npm install --prefix server",
+    "start": "npm start --prefix server"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
