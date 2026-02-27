@@ -2,11 +2,11 @@ const pool = require('../config/db');
 
 const CalendarEvent = {
   async create(communityId, createdBy, data) {
-    const { title, description, eventDate, startTime, endTime, location, eventType } = data;
+    const { title, description, event_date, start_time, end_time, location, event_type } = data;
     const result = await pool.query(
       `INSERT INTO calendar_events (community_id, created_by, title, description, event_date, start_time, end_time, location, event_type)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [communityId, createdBy, title, description || null, eventDate, startTime, endTime || null, location || null, eventType || 'meeting']
+      [communityId, createdBy, title, description || null, event_date, start_time || null, end_time || null, location || null, event_type || 'meeting']
     );
     return result.rows[0];
   },
@@ -44,11 +44,11 @@ const CalendarEvent = {
   },
 
   async update(id, data) {
-    const { title, description, eventDate, startTime, endTime, location, eventType } = data;
+    const { title, description, event_date, start_time, end_time, location, event_type } = data;
     const result = await pool.query(
       `UPDATE calendar_events SET title=$1, description=$2, event_date=$3, start_time=$4, end_time=$5, location=$6, event_type=$7
        WHERE id=$8 RETURNING *`,
-      [title, description || null, eventDate, startTime, endTime || null, location || null, eventType || 'meeting', id]
+      [title, description || null, event_date, start_time || null, end_time || null, location || null, event_type || 'meeting', id]
     );
     return result.rows[0];
   },

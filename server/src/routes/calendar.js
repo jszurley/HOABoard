@@ -32,9 +32,9 @@ router.post('/:communityId/calendar', auth, communityMember, async (req, res) =>
       return res.status(403).json({ error: 'Board member access required' });
     }
 
-    const { title, eventDate, startTime } = req.body;
-    if (!title || !eventDate || !startTime) {
-      return res.status(400).json({ error: 'Title, date, and start time are required' });
+    const { title, event_date } = req.body;
+    if (!title || !event_date) {
+      return res.status(400).json({ error: 'Title and date are required' });
     }
 
     const event = await CalendarEvent.create(req.params.communityId, req.user.id, req.body);

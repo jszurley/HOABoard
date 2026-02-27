@@ -2,11 +2,11 @@ const pool = require('../config/db');
 
 const Poll = {
   async create(communityId, createdBy, data) {
-    const { question, pollType, isAnonymous, resultsVisible, opensAt, closesAt, options } = data;
+    const { question, description, poll_type, is_anonymous, results_visible, opens_at, closes_at, options } = data;
     const result = await pool.query(
-      `INSERT INTO polls (community_id, created_by, question, poll_type, is_anonymous, results_visible, opens_at, closes_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [communityId, createdBy, question, pollType || 'single', isAnonymous || false, resultsVisible || 'after_close', opensAt || new Date(), closesAt || null]
+      `INSERT INTO polls (community_id, created_by, question, description, poll_type, is_anonymous, results_visible, opens_at, closes_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [communityId, createdBy, question, description || null, poll_type || 'single', is_anonymous || false, results_visible || 'after_close', opens_at || new Date(), closes_at || null]
     );
 
     const poll = result.rows[0];
@@ -75,11 +75,11 @@ const Poll = {
   },
 
   async update(id, data) {
-    const { question, pollType, isAnonymous, resultsVisible, opensAt, closesAt } = data;
+    const { question, description, poll_type, is_anonymous, results_visible, opens_at, closes_at } = data;
     const result = await pool.query(
-      `UPDATE polls SET question=$1, poll_type=$2, is_anonymous=$3, results_visible=$4, opens_at=$5, closes_at=$6
-       WHERE id=$7 RETURNING *`,
-      [question, pollType, isAnonymous, resultsVisible, opensAt, closesAt || null, id]
+      `UPDATE polls SET question=$1, description=$2, poll_type=$3, is_anonymous=$4, results_visible=$5, opens_at=$6, closes_at=$7
+       WHERE id=$8 RETURNING *`,
+      [question, description || null, poll_type, is_anonymous, results_visible, opens_at, closes_at || null, id]
     );
     return result.rows[0];
   },
