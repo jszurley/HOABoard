@@ -80,8 +80,8 @@ router.delete('/:communityId/potlucks/:potluckId', auth, communityAdmin, async (
 // POST /:communityId/potlucks/:potluckId/signups
 router.post('/:communityId/potlucks/:potluckId/signups', auth, communityMember, async (req, res) => {
   try {
-    const { dishName, category } = req.body;
-    if (!dishName || !category) {
+    const { dish_name, category } = req.body;
+    if (!dish_name || !category) {
       return res.status(400).json({ error: 'Dish name and category are required' });
     }
 
@@ -91,7 +91,7 @@ router.post('/:communityId/potlucks/:potluckId/signups', auth, communityMember, 
     }
 
     // Check category limit
-    const limitMap = { appetizer: 'max_appetizers', side: 'max_sides', main: 'max_mains', dessert: 'max_desserts', drinks: 'max_drinks', other: 'max_other' };
+    const limitMap = { appetizer: 'max_appetizers', side: 'max_sides', main: 'max_mains', dessert: 'max_desserts', drink: 'max_drinks', other: 'max_other' };
     const limit = event[limitMap[category]];
     if (limit !== null && limit !== undefined) {
       const count = await PotluckSignup.getCategoryCount(req.params.potluckId, category);

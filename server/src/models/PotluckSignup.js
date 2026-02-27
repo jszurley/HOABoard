@@ -2,11 +2,11 @@ const pool = require('../config/db');
 
 const PotluckSignup = {
   async create(potluckEventId, userId, data) {
-    const { dishName, category, notes } = data;
+    const { dish_name, category, notes } = data;
     const result = await pool.query(
       `INSERT INTO potluck_signups (potluck_event_id, user_id, dish_name, category, notes)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [potluckEventId, userId, dishName, category, notes || null]
+      [potluckEventId, userId, dish_name, category, notes || null]
     );
     return result.rows[0];
   },
@@ -20,11 +20,11 @@ const PotluckSignup = {
   },
 
   async update(id, data) {
-    const { dishName, category, notes } = data;
+    const { dish_name, category, notes } = data;
     const result = await pool.query(
       `UPDATE potluck_signups SET dish_name=$1, category=$2, notes=$3
        WHERE id=$4 RETURNING *`,
-      [dishName, category, notes || null, id]
+      [dish_name, category, notes || null, id]
     );
     return result.rows[0];
   },
