@@ -93,7 +93,7 @@ const Community = {
 
   async getPendingMembers(communityId) {
     const result = await pool.query(
-      `SELECT u.id, u.name, u.email, u.avatar_url, cm.joined_at
+      `SELECT u.id AS user_id, u.name, u.email, u.avatar_url, cm.joined_at
        FROM users u
        INNER JOIN community_members cm ON u.id = cm.user_id
        WHERE cm.community_id = $1 AND cm.status = 'pending'
