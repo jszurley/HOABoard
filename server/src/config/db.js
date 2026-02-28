@@ -216,7 +216,15 @@ const initializeDatabase = async () => {
       console.log('Database connected - schema already exists');
 
       // Migrations for existing databases
-      // Add new tables/columns here as features are added
+      const resetTokenCol = await pool.query(`
+        SELECT column_name FROM information_schema.columns
+        WHERE table_name = 'users' AND column_name = 'reset_token'
+      `);
+      if (resetTokenCol.rows.length === 0) {
+        await pool.query(`ALTER TABLE users ADD COLUMN reset_token VARCHAR(255)`);
+        await pool.query(`ALTER TABLE users ADD COLUMN reset_token_expires TIMESTAMP`);
+        console.log('Migration: added reset_token columns to users');
+      }
     }
   } catch (error) {
     console.error('Database initialization error:', error.message || error);
