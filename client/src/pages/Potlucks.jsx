@@ -34,7 +34,7 @@ const CATEGORY_LABELS = {
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
-  const date = new Date(dateStr);
+  const date = new Date(dateStr.slice(0, 10) + 'T00:00:00');
   return date.toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',

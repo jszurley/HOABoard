@@ -566,7 +566,7 @@ export default function Calendar() {
             <div className="flex flex-between" style={{ marginBottom: '0.75rem' }}>
               <h3 style={{ margin: 0 }}>
                 Events for{' '}
-                {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
+                {new Date(selectedDate.slice(0, 10) + 'T00:00:00').toLocaleDateString('en-US', {
                   weekday: 'long',
                   month: 'long',
                   day: 'numeric',

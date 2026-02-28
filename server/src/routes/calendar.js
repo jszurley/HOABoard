@@ -12,8 +12,9 @@ router.get('/:communityId/calendar', auth, communityMember, async (req, res) => 
     let events;
     if (month) {
       const [year, mon] = month.split('-').map(Number);
-      const startDate = new Date(year, mon - 1, 1).toISOString().split('T')[0];
-      const endDate = new Date(year, mon, 0).toISOString().split('T')[0];
+      const startDate = `${year}-${String(mon).padStart(2, '0')}-01`;
+      const lastDay = new Date(year, mon, 0).getDate();
+      const endDate = `${year}-${String(mon).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
       events = await CalendarEvent.findByCommunityAndMonth(req.params.communityId, startDate, endDate);
     } else {
       events = await CalendarEvent.findByCommunity(req.params.communityId);
