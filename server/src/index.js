@@ -58,6 +58,8 @@ const authLimiter = rateLimit({
 app.use('/api/', limiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
+app.use('/api/auth/reset-password', authLimiter);
 
 app.use(express.json({ limit: '10kb' }));
 

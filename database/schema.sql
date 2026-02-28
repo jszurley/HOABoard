@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(255) NOT NULL,
   phone VARCHAR(50),
   avatar_url TEXT,
+  reset_token VARCHAR(255),
+  reset_token_expires TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

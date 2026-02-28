@@ -54,6 +54,28 @@ const User = {
     return bcrypt.compare(password, hash);
   },
 
+  async setResetToken(email, tokenHash, expires) {
+    await pool.query(
+      'UPDATE users SET reset_token = $1, reset_token_expires = $2 WHERE email = $3',
+      [tokenHash, expires, email.toLowerCase()]
+    );
+  },
+
+  async findByResetToken(tokenHash) {
+    const result = await pool.query(
+      'SELECT * FROM users WHERE reset_token = $1 AND reset_token_expires > NOW()',
+      [tokenHash]
+    );
+    return result.rows[0];
+  },
+
+  async clearResetToken(id) {
+    await pool.query(
+      'UPDATE users SET reset_token = NULL, reset_token_expires = NULL WHERE id = $1',
+      [id]
+    );
+  },
+
   async getCommunities(userId) {
     const result = await pool.query(
       `SELECT c.id, c.name, c.description, c.address, c.invite_code, c.created_at,

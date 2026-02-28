@@ -34,6 +34,8 @@ export const getMe = () => api.get('/auth/me');
 export const getProfile = () => api.get('/auth/profile');
 export const updateProfile = (data) => api.put('/auth/profile', data);
 export const updatePassword = (data) => api.put('/auth/password', data);
+export const forgotPassword = (email) => api.post('/auth/forgot-password', { email });
+export const resetPassword = (token, password) => api.post('/auth/reset-password', { token, password });
 
 // Communities
 export const getCommunities = () => api.get('/communities');
