@@ -72,9 +72,9 @@ export default function Polls() {
     setError('');
     try {
       const { data } = await getPoll(communityId, pollId);
-      setSelectedPoll(data.poll);
-      setUserVotes(data.user_votes || []);
-      setTotalVotes(data.total_votes || 0);
+      setSelectedPoll(data);
+      setUserVotes(data.userVotes || []);
+      setTotalVotes(data.participationCount || 0);
       setSelectedOptions([]);
       setView('detail');
     } catch {
@@ -92,9 +92,9 @@ export default function Polls() {
       await castVote(communityId, selectedPoll.id, selectedOptions);
       // Reload poll details to get updated results
       const { data } = await getPoll(communityId, selectedPoll.id);
-      setSelectedPoll(data.poll);
-      setUserVotes(data.user_votes || []);
-      setTotalVotes(data.total_votes || 0);
+      setSelectedPoll(data);
+      setUserVotes(data.userVotes || []);
+      setTotalVotes(data.participationCount || 0);
       setSelectedOptions([]);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to cast vote');
