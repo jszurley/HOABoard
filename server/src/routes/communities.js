@@ -1,6 +1,7 @@
 const express = require('express');
 const Community = require('../models/Community');
 const User = require('../models/User');
+const brevo = require('../config/brevo');
 const auth = require('../middleware/auth');
 const communityMember = require('../middleware/communityMember');
 const communityAdmin = require('../middleware/communityAdmin');
@@ -60,6 +61,39 @@ router.post('/join', auth, async (req, res) => {
     }
 
     await Community.addMember(req.user.id, community.id, 'resident', 'pending');
+
+    // Notify admin(s) via email
+    const user = await User.findById(req.user.id);
+    const admins = await Community.getAdmins(community.id);
+    if (admins.length > 0 && process.env.BREVO_API_KEY) {
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const settingsUrl = `${frontendUrl}/communities/${community.id}/settings`;
+      try {
+        await brevo.transactionalEmails.sendTransacEmail({
+          sender: {
+            email: process.env.BREVO_SENDER_EMAIL || 'itsforme@itsforme.app',
+            name: process.env.BREVO_SENDER_NAME || 'HOABoard'
+          },
+          to: admins.map(a => ({ email: a.email, name: a.name })),
+          subject: `HOABoard - New Member Request for ${community.name}`,
+          htmlContent: `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="border-bottom: 2px solid #2E7D32; padding-bottom: 12px; margin-bottom: 20px;">
+                <h1 style="margin: 0; font-size: 1.25rem; color: #2E7D32;">HOABoard</h1>
+              </div>
+              <h2 style="margin-top: 0;">New Member Request</h2>
+              <p><strong>${user.name}</strong> (${user.email}) has requested to join <strong>${community.name}</strong>.</p>
+              <p><a href="${settingsUrl}" style="display: inline-block; padding: 10px 20px; background-color: #2E7D32; color: white; text-decoration: none; border-radius: 6px;">Review Request</a></p>
+              <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #e5e7eb; font-size: 0.8rem; color: #6b7280;">
+                <p>You're receiving this because you are an admin of ${community.name} on HOABoard.</p>
+              </div>
+            </div>
+          `
+        });
+      } catch (emailErr) {
+        console.error('Admin notification email failed:', emailErr.message);
+      }
+    }
 
     res.json({ message: 'Request sent! The community admin will review your request.', communityName: community.name });
   } catch (error) {

@@ -1,9 +1,14 @@
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import './Dashboard.css';
 
 export default function Dashboard() {
   const { user, communities } = useAuth();
+
+  // Auto-redirect non-admin members with exactly one community
+  if (communities.length === 1 && communities[0].role !== 'admin') {
+    return <Navigate to={`/communities/${communities[0].id}`} replace />;
+  }
 
   return (
     <div className="container dashboard-page">

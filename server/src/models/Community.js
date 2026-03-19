@@ -117,6 +117,17 @@ const Community = {
     );
   },
 
+  async getAdmins(communityId) {
+    const result = await pool.query(
+      `SELECT u.id, u.name, u.email
+       FROM users u
+       INNER JOIN community_members cm ON u.id = cm.user_id
+       WHERE cm.community_id = $1 AND cm.role = 'admin' AND cm.status = 'accepted'`,
+      [communityId]
+    );
+    return result.rows;
+  },
+
   async regenerateInviteCode(communityId) {
     const newCode = this.generateInviteCode();
     const result = await pool.query(

@@ -194,7 +194,7 @@ router.post('/forgot-password', async (req, res) => {
       try {
         await brevo.transactionalEmails.sendTransacEmail({
           sender: {
-            email: process.env.BREVO_SENDER_EMAIL || 'noreply@hoaboard.com',
+            email: process.env.BREVO_SENDER_EMAIL || 'jszurls@proton.me',
             name: process.env.BREVO_SENDER_NAME || 'HOABoard'
           },
           to: [{ email, name: user.name }],
