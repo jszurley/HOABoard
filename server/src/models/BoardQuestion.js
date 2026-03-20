@@ -15,11 +15,11 @@ const BoardQuestion = {
 
   async findByCommunityForBoard(communityId) {
     const result = await pool.query(
-      `SELECT bq.*, u.name as submitter_name, u.avatar_url as submitter_avatar,
+      `SELECT bq.*, u.name as submitted_by_name, u.avatar_url as submitter_avatar,
               (SELECT COUNT(*) FROM board_question_responses WHERE question_id = bq.id)::int as response_count
        FROM board_questions bq
        LEFT JOIN users u ON bq.submitted_by = u.id
-       WHERE bq.community_id = $1
+       WHERE bq.community_id = $1 AND bq.archived = FALSE
        ORDER BY bq.created_at DESC`,
       [communityId]
     );
@@ -28,13 +28,26 @@ const BoardQuestion = {
 
   async findByCommunityForResident(communityId, userId) {
     const result = await pool.query(
-      `SELECT bq.*, u.name as submitter_name, u.avatar_url as submitter_avatar,
+      `SELECT bq.*, u.name as submitted_by_name, u.avatar_url as submitter_avatar,
               (SELECT COUNT(*) FROM board_question_responses WHERE question_id = bq.id)::int as response_count
        FROM board_questions bq
        LEFT JOIN users u ON bq.submitted_by = u.id
-       WHERE bq.community_id = $1 AND (bq.submitted_by = $2 OR bq.is_public = TRUE)
+       WHERE bq.community_id = $1 AND bq.archived = FALSE AND (bq.submitted_by = $2 OR bq.is_public = TRUE)
        ORDER BY bq.created_at DESC`,
       [communityId, userId]
+    );
+    return result.rows;
+  },
+
+  async findArchivedByCommunity(communityId) {
+    const result = await pool.query(
+      `SELECT bq.*, u.name as submitted_by_name, u.avatar_url as submitter_avatar,
+              (SELECT COUNT(*) FROM board_question_responses WHERE question_id = bq.id)::int as response_count
+       FROM board_questions bq
+       LEFT JOIN users u ON bq.submitted_by = u.id
+       WHERE bq.community_id = $1 AND bq.archived = TRUE
+       ORDER BY bq.created_at DESC`,
+      [communityId]
     );
     return result.rows;
   },
@@ -49,7 +62,7 @@ const BoardQuestion = {
 
   async findByIdWithResponses(id) {
     const question = await pool.query(
-      `SELECT bq.*, u.name as submitter_name, u.avatar_url as submitter_avatar
+      `SELECT bq.*, u.name as submitted_by_name, u.avatar_url as submitter_avatar
        FROM board_questions bq
        LEFT JOIN users u ON bq.submitted_by = u.id
        WHERE bq.id = $1`,
@@ -75,6 +88,26 @@ const BoardQuestion = {
       [isPublic, id]
     );
     return result.rows[0];
+  },
+
+  async archive(id) {
+    const result = await pool.query(
+      'UPDATE board_questions SET archived = TRUE WHERE id = $1 RETURNING *',
+      [id]
+    );
+    return result.rows[0];
+  },
+
+  async unarchive(id) {
+    const result = await pool.query(
+      'UPDATE board_questions SET archived = FALSE WHERE id = $1 RETURNING *',
+      [id]
+    );
+    return result.rows[0];
+  },
+
+  async delete(id) {
+    await pool.query('DELETE FROM board_questions WHERE id = $1', [id]);
   }
 };
 

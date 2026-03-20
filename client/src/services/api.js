@@ -78,6 +78,9 @@ export const createQuestion = (communityId, data) => api.post(`/communities/${co
 export const getQuestion = (communityId, id) => api.get(`/communities/${communityId}/questions/${id}`);
 export const createQuestionResponse = (communityId, questionId, data) => api.post(`/communities/${communityId}/questions/${questionId}/responses`, data);
 export const updateQuestionVisibility = (communityId, id, isPublic) => api.put(`/communities/${communityId}/questions/${id}/visibility`, { is_public: isPublic });
+export const deleteQuestion = (communityId, id) => api.delete(`/communities/${communityId}/questions/${id}`);
+export const archiveQuestion = (communityId, id, archived) => api.put(`/communities/${communityId}/questions/${id}/archive`, { archived });
+export const getArchivedQuestions = (communityId) => api.get(`/communities/${communityId}/questions/archived`);
 
 // Calendar
 export const getCalendarEvents = (communityId, month) => api.get(`/communities/${communityId}/calendar`, { params: { month } });

@@ -97,6 +97,9 @@ CREATE TABLE IF NOT EXISTS board_questions (
   message TEXT NOT NULL,
   is_public BOOLEAN DEFAULT FALSE,
   status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'answered')),
+  flagged BOOLEAN DEFAULT FALSE,
+  flag_reason TEXT,
+  archived BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

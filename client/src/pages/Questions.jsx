@@ -7,6 +7,9 @@ import {
   getQuestion,
   createQuestionResponse,
   updateQuestionVisibility,
+  deleteQuestion,
+  archiveQuestion,
+  getArchivedQuestions,
 } from '../services/api';
 
 const style = document.createElement('style');
@@ -175,7 +178,7 @@ document.head.appendChild(style);
 
 export default function Questions() {
   const { communityId } = useParams();
-  const { user, isBoardMember } = useAuth();
+  const { user, isBoardMember, isCommunityAdmin } = useAuth();
 
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -199,6 +202,12 @@ export default function Questions() {
 
   // Visibility toggle
   const [togglingVisibility, setTogglingVisibility] = useState(null);
+
+  // Archive/delete
+  const [archivedQuestions, setArchivedQuestions] = useState([]);
+  const [showArchived, setShowArchived] = useState(false);
+  const [archiving, setArchiving] = useState(null);
+  const [deleting, setDeleting] = useState(null);
 
   useEffect(() => {
     loadQuestions();
@@ -297,6 +306,60 @@ export default function Questions() {
     }
   };
 
+  const loadArchivedQuestions = async () => {
+    try {
+      setError('');
+      const { data } = await getArchivedQuestions(communityId);
+      setArchivedQuestions(data);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to load archived questions');
+    }
+  };
+
+  const handleToggleArchived = async () => {
+    if (!showArchived) {
+      await loadArchivedQuestions();
+    }
+    setShowArchived(!showArchived);
+    setSelectedQuestion(null);
+  };
+
+  const handleArchive = async (questionId, archive) => {
+    const action = archive ? 'archive' : 'restore';
+    if (!confirm(`Are you sure you want to ${action} this question?`)) return;
+    try {
+      setArchiving(questionId);
+      setError('');
+      await archiveQuestion(communityId, questionId, archive);
+      setSelectedQuestion(null);
+      await loadQuestions();
+      if (showArchived) await loadArchivedQuestions();
+    } catch (err) {
+      setError(err.response?.data?.error || `Failed to ${action} question`);
+    } finally {
+      setArchiving(null);
+    }
+  };
+
+  const handleDelete = async (questionId) => {
+    if (!confirm('Are you sure you want to permanently delete this question? This cannot be undone.')) return;
+    try {
+      setDeleting(questionId);
+      setError('');
+      await deleteQuestion(communityId, questionId);
+      setSelectedQuestion(null);
+      if (showArchived) {
+        await loadArchivedQuestions();
+      } else {
+        await loadQuestions();
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete question');
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString(undefined, {
@@ -353,6 +416,9 @@ export default function Questions() {
   }
 
   const boardMember = isBoardMember(communityId);
+  const isAdmin = isCommunityAdmin(communityId);
+
+  const displayQuestions = showArchived ? archivedQuestions : filteredQuestions;
 
   return (
     <div className="container">
@@ -441,31 +507,41 @@ export default function Questions() {
       {/* Filter Tabs */}
       <div className="filter-tabs">
         <button
-          className={filter === 'all' ? 'active' : ''}
-          onClick={() => setFilter('all')}
+          className={!showArchived && filter === 'all' ? 'active' : ''}
+          onClick={() => { setShowArchived(false); setFilter('all'); setSelectedQuestion(null); }}
         >
           All ({questions.length})
         </button>
         <button
-          className={filter === 'pending' ? 'active' : ''}
-          onClick={() => setFilter('pending')}
+          className={!showArchived && filter === 'pending' ? 'active' : ''}
+          onClick={() => { setShowArchived(false); setFilter('pending'); setSelectedQuestion(null); }}
         >
           Pending ({questions.filter((q) => q.status === 'pending').length})
         </button>
         <button
-          className={filter === 'answered' ? 'active' : ''}
-          onClick={() => setFilter('answered')}
+          className={!showArchived && filter === 'answered' ? 'active' : ''}
+          onClick={() => { setShowArchived(false); setFilter('answered'); setSelectedQuestion(null); }}
         >
           Answered ({questions.filter((q) => q.status === 'answered').length})
         </button>
+        {isAdmin && (
+          <button
+            className={showArchived ? 'active' : ''}
+            onClick={handleToggleArchived}
+          >
+            Archived {showArchived ? `(${archivedQuestions.length})` : ''}
+          </button>
+        )}
       </div>
 
       {/* Question List */}
-      {filteredQuestions.length === 0 ? (
+      {displayQuestions.length === 0 ? (
         <div className="empty-state">
-          <h3>No questions found</h3>
+          <h3>{showArchived ? 'No archived questions' : 'No questions found'}</h3>
           <p>
-            {filter !== 'all'
+            {showArchived
+              ? 'No questions have been archived yet.'
+              : filter !== 'all'
               ? `No ${filter} questions at the moment.`
               : boardMember
               ? 'No questions have been submitted yet.'
@@ -473,7 +549,7 @@ export default function Questions() {
           </p>
         </div>
       ) : (
-        filteredQuestions.map((question) => (
+        displayQuestions.map((question) => (
           <div key={question.id}>
             <div
               className={`question-card ${
@@ -487,6 +563,7 @@ export default function Questions() {
                 {getStatusBadge(question.status)}
                 {getVisibilityBadge(question.is_public)}
                 {getFlagBadge(question)}
+                {showArchived && <span className="badge badge-warning">Archived</span>}
                 <span>by {question.submitted_by_name || 'Unknown'}</span>
                 <span>{formatDate(question.created_at)}</span>
               </div>
@@ -503,39 +580,79 @@ export default function Questions() {
                   <>
                     <div className="detail-header">
                       <h2>{selectedQuestion.title}</h2>
-                      {boardMember && (
-                        <button
-                          className="visibility-toggle"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleToggleVisibility(
-                              selectedQuestion.id,
-                              selectedQuestion.is_public
-                            );
-                          }}
-                          disabled={
-                            togglingVisibility === selectedQuestion.id ||
-                            (selectedQuestion.flagged && !selectedQuestion.is_public)
-                          }
-                          title={
-                            selectedQuestion.flagged && !selectedQuestion.is_public
-                              ? 'Cannot make public — flagged by moderation'
-                              : ''
-                          }
-                        >
-                          {togglingVisibility === selectedQuestion.id
-                            ? 'Updating...'
-                            : selectedQuestion.is_public
-                            ? 'Make Private'
-                            : 'Make Public'}
-                        </button>
-                      )}
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
+                        {boardMember && !showArchived && (
+                          <button
+                            className="visibility-toggle"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleVisibility(
+                                selectedQuestion.id,
+                                selectedQuestion.is_public
+                              );
+                            }}
+                            disabled={
+                              togglingVisibility === selectedQuestion.id ||
+                              (selectedQuestion.flagged && !selectedQuestion.is_public)
+                            }
+                            title={
+                              selectedQuestion.flagged && !selectedQuestion.is_public
+                                ? 'Cannot make public — flagged by moderation'
+                                : ''
+                            }
+                          >
+                            {togglingVisibility === selectedQuestion.id
+                              ? 'Updating...'
+                              : selectedQuestion.is_public
+                              ? 'Make Private'
+                              : 'Make Public'}
+                          </button>
+                        )}
+                        {isAdmin && !showArchived && (
+                          <button
+                            className="visibility-toggle"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleArchive(selectedQuestion.id, true);
+                            }}
+                            disabled={archiving === selectedQuestion.id}
+                          >
+                            {archiving === selectedQuestion.id ? 'Archiving...' : 'Archive'}
+                          </button>
+                        )}
+                        {isAdmin && showArchived && (
+                          <button
+                            className="visibility-toggle"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleArchive(selectedQuestion.id, false);
+                            }}
+                            disabled={archiving === selectedQuestion.id}
+                          >
+                            {archiving === selectedQuestion.id ? 'Restoring...' : 'Restore'}
+                          </button>
+                        )}
+                        {isAdmin && (
+                          <button
+                            className="visibility-toggle"
+                            style={{ color: '#dc3545', borderColor: '#dc3545' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(selectedQuestion.id);
+                            }}
+                            disabled={deleting === selectedQuestion.id}
+                          >
+                            {deleting === selectedQuestion.id ? 'Deleting...' : 'Delete'}
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div className="detail-meta">
                       {getStatusBadge(selectedQuestion.status)}
                       {getVisibilityBadge(selectedQuestion.is_public)}
                       {getFlagBadge(selectedQuestion)}
+                      {showArchived && <span className="badge badge-warning">Archived</span>}
                       <span>
                         Submitted by{' '}
                         {selectedQuestion.submitted_by_name || 'Unknown'}
@@ -600,7 +717,7 @@ export default function Questions() {
                     </div>
 
                     {/* Response Form (board members only) */}
-                    {boardMember && (
+                    {boardMember && !showArchived && (
                       <div className="response-form">
                         <h4>Write a Response</h4>
                         <form

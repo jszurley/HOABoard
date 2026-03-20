@@ -120,6 +120,9 @@ const initializeDatabase = async () => {
           message TEXT NOT NULL,
           is_public BOOLEAN DEFAULT FALSE,
           status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'answered')),
+          flagged BOOLEAN DEFAULT FALSE,
+          flag_reason TEXT,
+          archived BOOLEAN DEFAULT FALSE,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -235,6 +238,16 @@ const initializeDatabase = async () => {
         await pool.query(`ALTER TABLE board_questions ADD COLUMN flagged BOOLEAN DEFAULT FALSE`);
         await pool.query(`ALTER TABLE board_questions ADD COLUMN flag_reason TEXT`);
         console.log('Migration: added flagged/flag_reason columns to board_questions');
+      }
+
+      // Migration: add archived column to board_questions
+      const archivedCol = await pool.query(`
+        SELECT column_name FROM information_schema.columns
+        WHERE table_name = 'board_questions' AND column_name = 'archived'
+      `);
+      if (archivedCol.rows.length === 0) {
+        await pool.query(`ALTER TABLE board_questions ADD COLUMN archived BOOLEAN DEFAULT FALSE`);
+        console.log('Migration: added archived column to board_questions');
       }
     }
   } catch (error) {
