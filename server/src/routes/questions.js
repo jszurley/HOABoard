@@ -4,6 +4,8 @@ const BoardQuestionResponse = require('../models/BoardQuestionResponse');
 const auth = require('../middleware/auth');
 const communityMember = require('../middleware/communityMember');
 
+const { moderateContent } = require('../utils/contentModeration');
+
 const router = express.Router();
 
 // GET /:communityId/questions
@@ -30,7 +32,16 @@ router.post('/:communityId/questions', auth, communityMember, async (req, res) =
     if (!title || !message) {
       return res.status(400).json({ error: 'Title and message are required' });
     }
-    const question = await BoardQuestion.create(req.params.communityId, req.user.id, req.body);
+
+    // Run content moderation — flag inappropriate content and force private
+    const moderation = moderateContent(title, message);
+    const questionData = {
+      ...req.body,
+      flagged: moderation.flagged,
+      flag_reason: moderation.flagged ? moderation.reasons.join('; ') : null,
+    };
+
+    const question = await BoardQuestion.create(req.params.communityId, req.user.id, questionData);
     res.status(201).json(question);
   } catch (error) {
     console.error('Create question error:', error);
@@ -77,8 +88,8 @@ router.post('/:communityId/questions/:questionId/responses', auth, communityMemb
 
     const response = await BoardQuestionResponse.create(req.params.questionId, req.user.id, message, isPublic);
 
-    // If response is public, also make the question public
-    if (isPublic) {
+    // If response is public, also make the question public (unless flagged)
+    if (isPublic && !question.flagged) {
       await BoardQuestion.setVisibility(req.params.questionId, true);
     }
 
@@ -100,6 +111,11 @@ router.put('/:communityId/questions/:questionId/visibility', auth, communityMemb
     const question = await BoardQuestion.findById(req.params.questionId);
     if (!question || question.community_id !== parseInt(req.params.communityId)) {
       return res.status(404).json({ error: 'Question not found' });
+    }
+
+    // Prevent making flagged questions public
+    if (question.flagged && isPublic) {
+      return res.status(400).json({ error: 'Cannot make a flagged question public. The content was flagged by moderation for: ' + (question.flag_reason || 'policy violation') });
     }
 
     const updated = await BoardQuestion.setVisibility(req.params.questionId, isPublic);

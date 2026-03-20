@@ -190,6 +190,7 @@ export default function Questions() {
   const [showNewForm, setShowNewForm] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newMessage, setNewMessage] = useState('');
+  const [newIsPublic, setNewIsPublic] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Response form
@@ -242,9 +243,11 @@ export default function Questions() {
       await createQuestion(communityId, {
         title: newTitle.trim(),
         message: newMessage.trim(),
+        is_public: newIsPublic,
       });
       setNewTitle('');
       setNewMessage('');
+      setNewIsPublic(false);
       setShowNewForm(false);
       await loadQuestions();
     } catch (err) {
@@ -321,6 +324,19 @@ export default function Questions() {
     );
   };
 
+  const getFlagBadge = (question) => {
+    if (!question.flagged || !boardMember) return null;
+    return (
+      <span
+        className="badge badge-error"
+        title={question.flag_reason || 'Flagged by moderation'}
+        style={{ cursor: 'help' }}
+      >
+        Flagged
+      </span>
+    );
+  };
+
   // Filter questions based on selected tab
   const filteredQuestions = questions.filter((q) => {
     if (filter === 'pending') return q.status === 'pending';
@@ -387,6 +403,20 @@ export default function Questions() {
                 rows={4}
                 required
               />
+            </div>
+            <div className="form-group">
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={newIsPublic}
+                  onChange={(e) => setNewIsPublic(e.target.checked)}
+                  style={{ width: 'auto' }}
+                />
+                Make this question public
+                <span className="text-muted" style={{ fontSize: '0.8rem' }}>
+                  (visible to all community members)
+                </span>
+              </label>
             </div>
             <div className="form-actions">
               <button
@@ -456,6 +486,7 @@ export default function Questions() {
               <div className="question-meta">
                 {getStatusBadge(question.status)}
                 {getVisibilityBadge(question.is_public)}
+                {getFlagBadge(question)}
                 <span>by {question.submitted_by_name || 'Unknown'}</span>
                 <span>{formatDate(question.created_at)}</span>
               </div>
@@ -482,7 +513,15 @@ export default function Questions() {
                               selectedQuestion.is_public
                             );
                           }}
-                          disabled={togglingVisibility === selectedQuestion.id}
+                          disabled={
+                            togglingVisibility === selectedQuestion.id ||
+                            (selectedQuestion.flagged && !selectedQuestion.is_public)
+                          }
+                          title={
+                            selectedQuestion.flagged && !selectedQuestion.is_public
+                              ? 'Cannot make public — flagged by moderation'
+                              : ''
+                          }
                         >
                           {togglingVisibility === selectedQuestion.id
                             ? 'Updating...'
@@ -496,12 +535,34 @@ export default function Questions() {
                     <div className="detail-meta">
                       {getStatusBadge(selectedQuestion.status)}
                       {getVisibilityBadge(selectedQuestion.is_public)}
+                      {getFlagBadge(selectedQuestion)}
                       <span>
                         Submitted by{' '}
                         {selectedQuestion.submitted_by_name || 'Unknown'}
                       </span>
                       <span>{formatDate(selectedQuestion.created_at)}</span>
                     </div>
+
+                    {/* Flag reason (board members only) */}
+                    {boardMember && selectedQuestion.flagged && (
+                      <div
+                        style={{
+                          background: 'rgba(220, 53, 69, 0.08)',
+                          border: '1px solid rgba(220, 53, 69, 0.25)',
+                          borderRadius: '6px',
+                          padding: '0.75rem 1rem',
+                          marginBottom: '1rem',
+                          fontSize: '0.85rem',
+                          color: '#dc3545',
+                        }}
+                      >
+                        <strong>Moderation Flag:</strong> {selectedQuestion.flag_reason}
+                        <br />
+                        <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                          This question was automatically set to private. Review before making public.
+                        </span>
+                      </div>
+                    )}
 
                     <div className="detail-body">{selectedQuestion.message}</div>
 

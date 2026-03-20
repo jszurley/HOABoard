@@ -2,11 +2,13 @@ const pool = require('../config/db');
 
 const BoardQuestion = {
   async create(communityId, submittedBy, data) {
-    const { title, message } = data;
+    const { title, message, is_public, flagged, flag_reason } = data;
+    // If flagged, force to private regardless of user preference
+    const effectivePublic = flagged ? false : (is_public || false);
     const result = await pool.query(
-      `INSERT INTO board_questions (community_id, submitted_by, title, message)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [communityId, submittedBy, title, message]
+      `INSERT INTO board_questions (community_id, submitted_by, title, message, is_public, flagged, flag_reason)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [communityId, submittedBy, title, message, effectivePublic, flagged || false, flag_reason || null]
     );
     return result.rows[0];
   },

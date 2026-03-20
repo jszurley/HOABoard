@@ -225,6 +225,17 @@ const initializeDatabase = async () => {
         await pool.query(`ALTER TABLE users ADD COLUMN reset_token_expires TIMESTAMP`);
         console.log('Migration: added reset_token columns to users');
       }
+
+      // Migration: add content moderation columns to board_questions
+      const flaggedCol = await pool.query(`
+        SELECT column_name FROM information_schema.columns
+        WHERE table_name = 'board_questions' AND column_name = 'flagged'
+      `);
+      if (flaggedCol.rows.length === 0) {
+        await pool.query(`ALTER TABLE board_questions ADD COLUMN flagged BOOLEAN DEFAULT FALSE`);
+        await pool.query(`ALTER TABLE board_questions ADD COLUMN flag_reason TEXT`);
+        console.log('Migration: added flagged/flag_reason columns to board_questions');
+      }
     }
   } catch (error) {
     console.error('Database initialization error:', error.message || error);
