@@ -97,4 +97,12 @@ export const deletePoll = (communityId, id) => api.delete(`/communities/${commun
 export const castVote = (communityId, pollId, optionIds) => api.post(`/communities/${communityId}/polls/${pollId}/vote`, { optionIds });
 export const getPollResults = (communityId, pollId) => api.get(`/communities/${communityId}/polls/${pollId}/results`);
 
+// Documents
+export const getDocuments = (communityId) => api.get(`/communities/${communityId}/documents`);
+export const uploadDocument = (communityId, formData) => api.post(`/communities/${communityId}/documents`, formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+export const deleteDocument = (communityId, id) => api.delete(`/communities/${communityId}/documents/${id}`);
+export const downloadDocument = (communityId, id) => api.get(`/communities/${communityId}/documents/${id}/download`, { responseType: 'blob' });
+
 export default api;

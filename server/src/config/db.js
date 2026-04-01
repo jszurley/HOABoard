@@ -194,6 +194,20 @@ const initializeDatabase = async () => {
         )
       `);
 
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS community_documents (
+          id SERIAL PRIMARY KEY,
+          community_id INTEGER REFERENCES communities(id) ON DELETE CASCADE,
+          name VARCHAR(255) NOT NULL,
+          filename VARCHAR(255) NOT NULL,
+          mime_type VARCHAR(100) NOT NULL,
+          file_data BYTEA NOT NULL,
+          file_size INTEGER NOT NULL,
+          uploaded_by INTEGER REFERENCES users(id),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
       // Create indexes
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_communities_invite_code ON communities(invite_code)`);
@@ -213,6 +227,7 @@ const initializeDatabase = async () => {
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_poll_options_poll_id ON poll_options(poll_id)`);
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_poll_votes_poll_id ON poll_votes(poll_id)`);
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_poll_votes_user_id ON poll_votes(user_id)`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_community_documents_community_id ON community_documents(community_id)`);
 
       console.log('Database schema initialized successfully');
     } else {
@@ -248,6 +263,31 @@ const initializeDatabase = async () => {
       if (archivedCol.rows.length === 0) {
         await pool.query(`ALTER TABLE board_questions ADD COLUMN archived BOOLEAN DEFAULT FALSE`);
         console.log('Migration: added archived column to board_questions');
+      }
+
+      // Migration: add community_documents table
+      const docsTable = await pool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables
+          WHERE table_name = 'community_documents'
+        )
+      `);
+      if (!docsTable.rows[0].exists) {
+        await pool.query(`
+          CREATE TABLE community_documents (
+            id SERIAL PRIMARY KEY,
+            community_id INTEGER REFERENCES communities(id) ON DELETE CASCADE,
+            name VARCHAR(255) NOT NULL,
+            filename VARCHAR(255) NOT NULL,
+            mime_type VARCHAR(100) NOT NULL,
+            file_data BYTEA NOT NULL,
+            file_size INTEGER NOT NULL,
+            uploaded_by INTEGER REFERENCES users(id),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_community_documents_community_id ON community_documents(community_id)`);
+        console.log('Migration: created community_documents table');
       }
     }
   } catch (error) {

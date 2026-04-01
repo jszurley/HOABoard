@@ -14,6 +14,7 @@ const suggestionsRoutes = require('./routes/suggestions');
 const questionsRoutes = require('./routes/questions');
 const calendarRoutes = require('./routes/calendar');
 const pollsRoutes = require('./routes/polls');
+const documentsRoutes = require('./routes/documents');
 
 const app = express();
 
@@ -76,6 +77,7 @@ app.use('/api/communities', suggestionsRoutes);
 app.use('/api/communities', questionsRoutes);
 app.use('/api/communities', calendarRoutes);
 app.use('/api/communities', pollsRoutes);
+app.use('/api/communities', documentsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -1,3 +1,19 @@
+.document-upload-form {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.document-upload-form .form-input {
+  flex: 1;
+  min-width: 150px;
+}
+
 .documents-list {
   display: flex;
   flex-direction: column;
@@ -30,9 +46,45 @@
   font-weight: 600;
 }
 
-.document-type {
+.document-meta {
   font-size: 0.8rem;
   color: #666;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+}
+
+.document-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.btn-danger {
+  color: #d32f2f;
+  border-color: #d32f2f;
+}
+
+.btn-danger:hover {
+  background: #d32f2f;
+  color: white;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #666;
+}
+
+@media (max-width: 600px) {
+  .document-upload-form {
+    flex-direction: column;
+  }
+  .document-upload-form .form-input {
+    width: 100%;
+  }
+  .document-card {
+    flex-wrap: wrap;
+  }
+  .document-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }

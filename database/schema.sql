@@ -164,6 +164,19 @@ CREATE TABLE IF NOT EXISTS poll_votes (
   UNIQUE (poll_id, option_id, user_id)
 );
 
+-- Community Documents
+CREATE TABLE IF NOT EXISTS community_documents (
+  id SERIAL PRIMARY KEY,
+  community_id INTEGER REFERENCES communities(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  filename VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(100) NOT NULL,
+  file_data BYTEA NOT NULL,
+  file_size INTEGER NOT NULL,
+  uploaded_by INTEGER REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_community_members_community ON community_members(community_id);
 CREATE INDEX IF NOT EXISTS idx_community_members_user ON community_members(user_id);
@@ -179,6 +192,7 @@ CREATE INDEX IF NOT EXISTS idx_polls_community ON polls(community_id);
 CREATE INDEX IF NOT EXISTS idx_poll_options_poll ON poll_options(poll_id);
 CREATE INDEX IF NOT EXISTS idx_poll_votes_poll ON poll_votes(poll_id);
 CREATE INDEX IF NOT EXISTS idx_poll_votes_user ON poll_votes(user_id);
+CREATE INDEX IF NOT EXISTS idx_community_documents_community ON community_documents(community_id);
 
 -- Updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
