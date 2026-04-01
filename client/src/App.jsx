@@ -17,6 +17,7 @@ import Suggestions from './pages/Suggestions';
 import Questions from './pages/Questions';
 import Calendar from './pages/Calendar';
 import Polls from './pages/Polls';
+import Documents from './pages/Documents';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -49,6 +50,7 @@ export default function App() {
         <Route path="/communities/:communityId/questions" element={<ProtectedRoute><Questions /></ProtectedRoute>} />
         <Route path="/communities/:communityId/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
         <Route path="/communities/:communityId/polls" element={<ProtectedRoute><Polls /></ProtectedRoute>} />
+        <Route path="/communities/:communityId/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>

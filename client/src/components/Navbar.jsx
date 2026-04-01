@@ -38,6 +38,7 @@ export default function Navbar() {
             <Link to={`/communities/${communityId}/questions`} className={location.pathname.includes('/questions') ? 'active' : ''}>Questions</Link>
             <Link to={`/communities/${communityId}/calendar`} className={location.pathname.includes('/calendar') ? 'active' : ''}>Calendar</Link>
             <Link to={`/communities/${communityId}/polls`} className={location.pathname.includes('/polls') ? 'active' : ''}>Polls</Link>
+            <Link to={`/communities/${communityId}/documents`} className={location.pathname.includes('/documents') ? 'active' : ''}>Documents</Link>
           </div>
         )}
 
